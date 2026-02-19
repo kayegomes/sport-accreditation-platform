@@ -272,6 +272,14 @@ export const appRouter = router({
         
         return { success: true, id: Number(result[0].insertId) };
       }),
+    
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteEvent(input.id);
+        await logAction(ctx.user.id, ctx.user.name, 'DELETE', 'EVENT', input.id, {}, ctx.req);
+        return { success: true };
+      }),
   }),
 
   // ==========================================================================
@@ -394,6 +402,22 @@ export const appRouter = router({
         
         await logAction(ctx.user.id, ctx.user.name, 'UPDATE', 'COLLABORATOR', id, data, ctx.req);
         
+        return { success: true };
+      }),
+    
+    delete: fornecedorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        // Verify ownership for fornecedor
+        if (ctx.user.role === 'fornecedor') {
+          const collaborator = await db.getCollaboratorById(input.id);
+          if (collaborator?.supplierId !== ctx.user.supplierId) {
+            throw new TRPCError({ code: 'FORBIDDEN' });
+          }
+        }
+        
+        await db.deleteCollaborator(input.id);
+        await logAction(ctx.user.id, ctx.user.name, 'DELETE', 'COLLABORATOR', input.id, {}, ctx.req);
         return { success: true };
       }),
   }),

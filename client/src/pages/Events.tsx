@@ -4,13 +4,33 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus } from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { EventForm } from "@/components/EventForm";
 
 export default function Events() {
   const { user } = useAuth();
   const { data: events, isLoading } = trpc.events.list.useQuery();
-  const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const utils = trpc.useUtils();
+
+  const deleteMutation = trpc.events.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Evento excluído com sucesso!");
+      utils.events.list.invalidate();
+      utils.dashboard.stats.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao excluir evento");
+    },
+  });
+
+  const handleDelete = (eventId: number, eventName: string) => {
+    if (confirm(`Tem certeza que deseja excluir o evento "${eventName}"?`)) {
+      deleteMutation.mutate({ id: eventId });
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -46,7 +66,10 @@ export default function Events() {
           </p>
         </div>
         {user?.role === 'admin' && (
-          <Button onClick={() => toast.info("Funcionalidade em desenvolvimento")}>
+          <Button onClick={() => {
+            setSelectedEvent(null);
+            setFormOpen(true);
+          }}>
             <Plus className="mr-2 h-4 w-4" />
             Novo Evento
           </Button>
@@ -56,7 +79,7 @@ export default function Events() {
       <div className="grid gap-4">
         {events && events.length > 0 ? (
           events.map((event) => (
-            <Card key={event.id} className="cursor-pointer hover:bg-accent/50 transition-colors">
+            <Card key={event.id}>
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
@@ -70,6 +93,30 @@ export default function Events() {
                 </div>
               </CardHeader>
               <CardContent>
+                {user?.role === 'admin' && (
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedEvent(event);
+                        setFormOpen(true);
+                      }}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Editar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDelete(event.id, event.name)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </Button>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   {event.wo && (
                     <div>
@@ -107,6 +154,12 @@ export default function Events() {
           </Card>
         )}
       </div>
+
+      <EventForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        event={selectedEvent}
+      />
     </div>
   );
 }

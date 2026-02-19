@@ -228,6 +228,13 @@ export async function updateEvent(id: number, data: Partial<InsertEvent>) {
   await db.update(events).set(data).where(eq(events.id, id));
 }
 
+export async function deleteEvent(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  // Soft delete by setting active to false
+  await db.update(events).set({ active: false }).where(eq(events.id, id));
+}
+
 export async function searchEvents(filters: {
   wo?: string;
   federation?: string;
@@ -326,6 +333,13 @@ export async function updateCollaborator(id: number, data: Partial<InsertCollabo
   const db = await getDb();
   if (!db) return;
   await db.update(collaborators).set(data).where(eq(collaborators.id, id));
+}
+
+export async function deleteCollaborator(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  // Soft delete by setting active to false
+  await db.update(collaborators).set({ active: false }).where(eq(collaborators.id, id));
 }
 
 export async function searchCollaborators(filters: {
