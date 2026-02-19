@@ -409,6 +409,12 @@ export async function updateAccreditation(id: number, data: Partial<InsertAccred
   await db.update(accreditations).set(data).where(eq(accreditations.id, id));
 }
 
+export async function deleteAccreditation(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(accreditations).where(eq(accreditations.id, id));
+}
+
 export async function getAccreditationCountByEventAndFunction(eventId: number, jobFunctionId: number) {
   const db = await getDb();
   if (!db) return 0;

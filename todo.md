@@ -61,3 +61,16 @@
 - [x] Validar logs de auditoria
 - [x] Criar dados de exemplo (mock data)
 - [x] Criar checkpoint final do projeto
+
+## Nova Funcionalidade: Página de Credenciamento Interativa
+
+- [x] Criar página de credenciamento com seleção de evento
+- [x] Implementar listagem de colaboradores disponíveis com busca/filtro
+- [x] Adicionar seleção múltipla de colaboradores para credenciar
+- [x] Mostrar limites de função por evento em tempo real
+- [x] Implementar validação de quotas antes de credenciar
+- [x] Adicionar indicadores visuais de limite atingido/disponível
+- [x] Criar modal de confirmação com resumo do credenciamento
+- [x] Implementar listagem de colaboradores já credenciados no evento
+- [x] Adicionar funcionalidade de remover credenciamento
+- [x] Criar testes para validação de limites e credenciamento

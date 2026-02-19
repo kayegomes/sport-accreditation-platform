@@ -510,6 +510,14 @@ export const appRouter = router({
         
         return { success: true };
       }),
+    
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteAccreditation(input.id);
+        await logAction(ctx.user.id, ctx.user.name, 'DELETE', 'ACCREDITATION', input.id, {}, ctx.req);
+        return { success: true };
+      }),
   }),
 
   // ==========================================================================
