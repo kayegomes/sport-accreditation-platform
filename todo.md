@@ -74,3 +74,15 @@
 - [x] Implementar listagem de colaboradores já credenciados no evento
 - [x] Adicionar funcionalidade de remover credenciamento
 - [x] Criar testes para validação de limites e credenciamento
+
+
+## Nova Funcionalidade: Página de Logs de Auditoria
+
+- [x] Criar página AuditLogs.tsx com tabela de logs
+- [x] Implementar filtros por usuário, ação, entidade e período
+- [x] Adicionar visualização expandível de JSON (antes/depois)
+- [x] Implementar badges coloridos por tipo de ação
+- [x] Adicionar paginação de resultados
+- [x] Formatar data/hora de forma legível
+- [x] Implementar controle de acesso (apenas admin)
+- [x] Criar testes para logs de auditoria

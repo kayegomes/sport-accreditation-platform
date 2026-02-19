@@ -474,6 +474,8 @@ export async function getAuditLogs(filters?: {
   entityType?: string;
   entityId?: number;
   action?: string;
+  startDate?: Date;
+  endDate?: Date;
   limit?: number;
 }) {
   const db = await getDb();
@@ -492,6 +494,12 @@ export async function getAuditLogs(filters?: {
   }
   if (filters?.action) {
     conditions.push(eq(auditLogs.action, filters.action));
+  }
+  if (filters?.startDate) {
+    conditions.push(sql`${auditLogs.createdAt} >= ${filters.startDate}`);
+  }
+  if (filters?.endDate) {
+    conditions.push(sql`${auditLogs.createdAt} <= ${filters.endDate}`);
   }
   
   let query = db.select().from(auditLogs);

@@ -574,6 +574,8 @@ export const appRouter = router({
         entityType: z.string().optional(),
         entityId: z.number().optional(),
         action: z.string().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
         limit: z.number().optional(),
       }))
       .query(async ({ input }) => {
