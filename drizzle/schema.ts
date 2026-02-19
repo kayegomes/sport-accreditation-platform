@@ -77,6 +77,7 @@ export const events = mysqlTable("events", {
   location: varchar("location", { length: 255 }),
   eventType: varchar("eventType", { length: 100 }), // Tipo de evento (futebol, vôlei, etc)
   federation: varchar("federation", { length: 100 }), // Federação responsável
+  isConfidential: boolean("isConfidential").default(false).notNull(), // Eventos confidenciais exigem vínculo explícito
   status: mysqlEnum("status", [
     "aberto",           // D-10 até D-4: cadastro aberto
     "em_verificacao",   // D-4: verificação de dados
@@ -294,3 +295,29 @@ export const exports = mysqlTable("exports", {
 
 export type Export = typeof exports.$inferSelect;
 export type InsertExport = typeof exports.$inferInsert;
+
+// ============================================================================
+// VÍNCULOS EVENTO-FORNECEDOR (Controle de Acesso)
+// ============================================================================
+
+export const eventSuppliers = mysqlTable("event_suppliers", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: int("eventId").notNull(),
+  supplierId: int("supplierId").notNull(),
+  grantedBy: int("grantedBy").notNull(), // Usuário admin que concedeu o acesso
+  grantedAt: timestamp("grantedAt").defaultNow().notNull(),
+  revokedBy: int("revokedBy"),
+  revokedAt: timestamp("revokedAt"),
+  active: boolean("active").default(true).notNull(),
+  notes: text("notes"), // Motivo da concessão/revogação
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  eventSupplierIdx: index("event_supplier_idx").on(table.eventId, table.supplierId),
+  eventIdx: index("event_idx").on(table.eventId),
+  supplierIdx: index("supplier_idx").on(table.supplierId),
+  activeIdx: index("active_idx").on(table.active),
+}));
+
+export type EventSupplier = typeof eventSuppliers.$inferSelect;
+export type InsertEventSupplier = typeof eventSuppliers.$inferInsert;

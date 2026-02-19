@@ -136,3 +136,39 @@
 - [x] Mostrar resumo de registros válidos/inválidos
 - [x] Permitir correção de erros antes de confirmar importação
 - [x] Adicionar botão de download do template de importação
+
+
+## FUNCIONALIDADE CRÍTICA: Controle de Acesso por Fornecedor
+
+### Fase 1: Modelagem do Banco de Dados
+- [x] Adicionar campo `supplier_id` (nullable) na tabela `users` (já existia)
+- [x] Adicionar campo `is_confidential` (boolean) na tabela `events`
+- [x] Criar tabela `event_suppliers` (id, event_id, supplier_id, granted_by, granted_at, active)
+- [x] Criar índices para otimizar consultas de acesso
+- [x] Migrar dados existentes (manter compatibilidade)
+
+### Fase 2: Middleware e Controle de Acesso
+- [x] Criar middleware `supplierAccessMiddleware` para verificar acesso a eventos
+- [x] Implementar procedure `canAccessEvent(userId, eventId)` 
+- [x] Atualizar procedures de eventos para filtrar por supplier_id
+- [x] Implementar bloqueio de acesso direto via URL
+- [x] Adicionar validação de eventos confidenciais
+- [x] Filtrar eventos passados da listagem padrão
+- [x] Registrar logs de tentativas de acesso não autorizado
+
+### Fase 3: Gestão de Vínculos Evento-Fornecedor
+- [x] Criar página de gestão de vínculos (admin only)
+- [x] Implementar interface para vincular fornecedor a evento
+- [x] Implementar interface para revogar vínculo
+- [x] Mostrar histórico de vinculações/revogações
+- [x] Adicionar filtros por evento/fornecedor
+- [ ] Implementar notificação ao fornecedor quando vinculado
+
+### Fase 4: Testes de Segurança
+- [x] Testar acesso de usuário externo a evento vinculado
+- [x] Testar bloqueio de acesso a evento não vinculado
+- [x] Testar acesso admin a todos os eventos
+- [x] Testar eventos confidenciais
+- [x] Testar logs de tentativas de acesso não autorizado
+- [x] Validar filtragem de eventos passados
+- [x] Testar revogação de acessoecedores

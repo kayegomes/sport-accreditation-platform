@@ -12,7 +12,8 @@ import {
   auditLogs, InsertAuditLog,
   notifications, InsertNotification,
   batchImports, InsertBatchImport,
-  exports as exportsTable, InsertExport
+  exports as exportsTable, InsertExport,
+  eventSuppliers, InsertEventSupplier
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -615,4 +616,161 @@ export async function getAllExports() {
   return await db.select().from(exportsTable)
     .orderBy(desc(exportsTable.exportedAt))
     .limit(100);
+}
+
+
+// ============================================================================
+// EVENT SUPPLIER ACCESS CONTROL
+// ============================================================================
+
+export async function grantEventAccess(eventSupplier: InsertEventSupplier) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(eventSuppliers).values(eventSupplier);
+  return Number((result as any).insertId);
+}
+
+export async function revokeEventAccess(eventId: number, supplierId: number, revokedBy: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(eventSuppliers)
+    .set({ 
+      active: false, 
+      revokedBy,
+      revokedAt: new Date()
+    })
+    .where(
+      and(
+        eq(eventSuppliers.eventId, eventId),
+        eq(eventSuppliers.supplierId, supplierId)
+      )
+    );
+}
+
+export async function getEventSupplierAccess(eventId: number, supplierId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select()
+    .from(eventSuppliers)
+    .where(
+      and(
+        eq(eventSuppliers.eventId, eventId),
+        eq(eventSuppliers.supplierId, supplierId),
+        eq(eventSuppliers.active, true)
+      )
+    )
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getEventSuppliers(eventId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select()
+    .from(eventSuppliers)
+    .where(eq(eventSuppliers.eventId, eventId))
+    .orderBy(desc(eventSuppliers.createdAt));
+}
+
+export async function getSupplierEvents(supplierId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  return await db.select()
+    .from(eventSuppliers)
+    .where(
+      and(
+        eq(eventSuppliers.supplierId, supplierId),
+        eq(eventSuppliers.active, true)
+      )
+    )
+    .orderBy(desc(eventSuppliers.createdAt));
+}
+
+/**
+ * Check if a user can access an event
+ * Rules:
+ * - Admin can access all events
+ * - External users (fornecedor) can only access events where their supplier is granted access
+ * - Confidential events require explicit access grant
+ */
+export async function canUserAccessEvent(userId: number, eventId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Get user
+  const user = await getUserById(userId);
+  if (!user) return false;
+  
+  // Admin can access all events
+  if (user.role === 'admin') return true;
+  
+  // Get event
+  const event = await getEventById(eventId);
+  if (!event || !event.active) return false;
+  
+  // External user must have supplier
+  if (!user.supplierId) return false;
+  
+  // Check if supplier has access to this event
+  const access = await getEventSupplierAccess(eventId, user.supplierId);
+  return access !== null;
+}
+
+/**
+ * Get accessible events for a user
+ * Rules:
+ * - Admin sees all active events
+ * - External users see only events their supplier has access to
+ * - Past events are excluded from default listing
+ */
+export async function getAccessibleEvents(userId: number, includePast: boolean = false) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const user = await getUserById(userId);
+  if (!user) return [];
+  
+  // Admin sees all events
+  if (user.role === 'admin') {
+    const conditions = [eq(events.active, true)];
+    
+    // Filter out past events unless explicitly requested
+    if (!includePast) {
+      conditions.push(sql`${events.eventDate} >= CURDATE()`);
+    }
+    
+    return await db.select()
+      .from(events)
+      .where(and(...conditions))
+      .orderBy(desc(events.eventDate));
+  }
+  
+  // External user - get events their supplier has access to
+  if (!user.supplierId) return [];
+  
+  const supplierAccess = await getSupplierEvents(user.supplierId);
+  if (supplierAccess.length === 0) return [];
+  
+  const eventIds = supplierAccess.map(access => access.eventId);
+  
+  const conditions = [
+    eq(events.active, true),
+    inArray(events.id, eventIds)
+  ];
+  
+  // Filter out past events unless explicitly requested
+  if (!includePast) {
+    conditions.push(sql`${events.eventDate} >= CURDATE()`);
+  }
+  
+  return await db.select()
+    .from(events)
+    .where(and(...conditions))
+    .orderBy(desc(events.eventDate));
 }

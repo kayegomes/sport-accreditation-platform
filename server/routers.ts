@@ -6,6 +6,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 import { exportRouter, batchImportRouter } from "./exportRouters";
+import { eventSupplierRouter } from "./eventSupplierRouter";
 
 // ============================================================================
 // MIDDLEWARE: Role-based Access Control
@@ -56,6 +57,7 @@ async function logAction(
 
 export const appRouter = router({
   system: systemRouter,
+  eventSuppliers: eventSupplierRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -187,13 +189,22 @@ export const appRouter = router({
   // ==========================================================================
   
   events: router({
-    list: protectedProcedure.query(async () => {
-      return await db.getAllEvents();
+    list: protectedProcedure.query(async ({ ctx }) => {
+      // Use access-controlled event listing
+      return await db.getAccessibleEvents(ctx.user.id, false);
     }),
     
     getById: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
+        // Check access before returning event
+        const canAccess = await db.canUserAccessEvent(ctx.user.id, input.id);
+        if (!canAccess) {
+          throw new TRPCError({ 
+            code: 'FORBIDDEN', 
+            message: 'Acesso negado. Seu fornecedor não está vinculado a este evento.' 
+          });
+        }
         return await db.getEventById(input.id);
       }),
     

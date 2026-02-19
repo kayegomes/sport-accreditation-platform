@@ -14,6 +14,7 @@ import JobFunctions from "./pages/JobFunctions";
 import AuditLogs from "./pages/AuditLogs";
 import PublicConsultation from "./pages/PublicConsultation";
 import Reports from "./pages/Reports";
+import EventAccess from "./pages/EventAccess";
 
 function Router() {
   return (
@@ -67,6 +68,12 @@ function Router() {
       <Route path="/relatorios">
         <DashboardLayout>
           <Reports />
+        </DashboardLayout>
+      </Route>
+      
+      <Route path="/acesso-eventos">
+        <DashboardLayout>
+          <EventAccess />
         </DashboardLayout>
       </Route>
       

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE event_suppliers (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  eventId INT NOT NULL,\n  supplierId INT NOT NULL,\n  grantedBy INT NOT NULL,\n  grantedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  revokedBy INT,\n  revokedAt TIMESTAMP,\n  active BOOLEAN NOT NULL DEFAULT TRUE,\n  notes TEXT,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX event_supplier_idx (eventId, supplierId),\n  INDEX event_idx (eventId),\n  INDEX supplier_idx (supplierId),\n  INDEX active_idx (active)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2qxCxp91LGus11n.ba7b4e6ffe5e --database hpVFuojJBmTKnZg7RuvxTj --execute CREATE TABLE event_suppliers (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  eventId INT NOT NULL,\n  supplierId INT NOT NULL,\n  grantedBy INT NOT NULL,\n  grantedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  revokedBy INT,\n  revokedAt TIMESTAMP,\n  active BOOLEAN NOT NULL DEFAULT TRUE,\n  notes TEXT,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX event_supplier_idx (eventId, supplierId),\n  INDEX event_idx (eventId),\n  INDEX supplier_idx (supplierId),\n  INDEX active_idx (active)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 233
+}
