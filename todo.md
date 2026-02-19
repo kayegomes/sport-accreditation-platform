@@ -91,3 +91,29 @@
 ## Bug Fix: Página de Logs de Auditoria
 
 - [x] Corrigir erro de Select.Item com value vazio no filtro de usuário
+
+
+## Nova Funcionalidade: Gestão de Fornecedores e Funções
+
+### Página de Fornecedores
+- [x] Criar página Suppliers.tsx com tabela de fornecedores
+- [x] Implementar modal de criação/edição de fornecedor
+- [x] Adicionar campos: nome, CNPJ, contato, telefone, email
+- [x] Implementar validação de CNPJ
+- [x] Adicionar botão de exclusão (soft delete)
+- [x] Implementar controle de acesso (apenas admin)
+- [x] Adicionar busca/filtro de fornecedores
+
+### Página de Funções
+- [x] Criar página JobFunctions.tsx com tabela de funções
+- [x] Implementar modal de criação/edição de função
+- [x] Adicionar campos: nome, descrição, ativo
+- [x] Adicionar botão de exclusão (soft delete)
+- [x] Implementar controle de acesso (apenas admin)
+- [x] Adicionar busca/filtro de funções
+
+### Backend
+- [x] Adicionar procedure de delete para suppliers
+- [x] Adicionar procedure de delete para jobFunctions
+- [x] Criar testes para CRUD de fornecedores
+- [x] Criar testes para CRUD de funções

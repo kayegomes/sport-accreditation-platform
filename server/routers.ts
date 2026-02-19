@@ -118,6 +118,16 @@ export const appRouter = router({
         
         return { success: true };
       }),
+    
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteSupplier(input.id);
+        
+        await logAction(ctx.user.id, ctx.user.name, 'DELETE', 'SUPPLIER', input.id, undefined, ctx.req);
+        
+        return { success: true };
+      }),
   }),
 
   // ==========================================================================
@@ -157,6 +167,16 @@ export const appRouter = router({
         await db.updateJobFunction(id, data);
         
         await logAction(ctx.user.id, ctx.user.name, 'UPDATE', 'JOB_FUNCTION', id, data, ctx.req);
+        
+        return { success: true };
+      }),
+    
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteJobFunction(input.id);
+        
+        await logAction(ctx.user.id, ctx.user.name, 'DELETE', 'JOB_FUNCTION', input.id, undefined, ctx.req);
         
         return { success: true };
       }),

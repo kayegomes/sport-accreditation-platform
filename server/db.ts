@@ -157,6 +157,12 @@ export async function updateSupplier(id: number, data: Partial<InsertSupplier>) 
   await db.update(suppliers).set(data).where(eq(suppliers.id, id));
 }
 
+export async function deleteSupplier(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(suppliers).set({ active: false }).where(eq(suppliers.id, id));
+}
+
 // ============================================================================
 // JOB FUNCTIONS
 // ============================================================================
@@ -185,6 +191,12 @@ export async function updateJobFunction(id: number, data: Partial<InsertJobFunct
   const db = await getDb();
   if (!db) return;
   await db.update(jobFunctions).set(data).where(eq(jobFunctions.id, id));
+}
+
+export async function deleteJobFunction(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(jobFunctions).set({ active: false }).where(eq(jobFunctions.id, id));
 }
 
 // ============================================================================
