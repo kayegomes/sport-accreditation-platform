@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE users ADD COLUMN supplierId int;\nALTER TABLE users ADD INDEX supplier_idx (supplierId);\nALTER TABLE users MODIFY COLUMN role enum('admin', 'fornecedor', 'consulta') NOT NULL DEFAULT 'fornecedor';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2qxCxp91LGus11n.ba7b4e6ffe5e --database hpVFuojJBmTKnZg7RuvxTj --execute ALTER TABLE users ADD COLUMN supplierId int;\nALTER TABLE users ADD INDEX supplier_idx (supplierId);\nALTER TABLE users MODIFY COLUMN role enum('admin', 'fornecedor', 'consulta') NOT NULL DEFAULT 'fornecedor';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1942
+}
