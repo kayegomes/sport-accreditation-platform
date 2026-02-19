@@ -86,3 +86,8 @@
 - [x] Formatar data/hora de forma legível
 - [x] Implementar controle de acesso (apenas admin)
 - [x] Criar testes para logs de auditoria
+
+
+## Bug Fix: Página de Logs de Auditoria
+
+- [x] Corrigir erro de Select.Item com value vazio no filtro de usuário

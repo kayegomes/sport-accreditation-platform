@@ -20,7 +20,7 @@ export default function AuditLogs() {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [actionFilter, setActionFilter] = useState<ActionType>("ALL");
   const [entityFilter, setEntityFilter] = useState<EntityType>("ALL");
-  const [userFilter, setUserFilter] = useState<string>("");
+  const [userFilter, setUserFilter] = useState<string>("ALL_USERS");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
@@ -29,7 +29,7 @@ export default function AuditLogs() {
     {
       action: actionFilter === "ALL" ? undefined : actionFilter,
       entityType: entityFilter === "ALL" ? undefined : entityFilter,
-      userId: userFilter ? Number(userFilter) : undefined,
+      userId: userFilter && userFilter !== "ALL_USERS" ? Number(userFilter) : undefined,
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
     },
@@ -63,12 +63,12 @@ export default function AuditLogs() {
   const clearFilters = () => {
     setActionFilter("ALL");
     setEntityFilter("ALL");
-    setUserFilter("");
+    setUserFilter("ALL_USERS");
     setStartDate("");
     setEndDate("");
   };
 
-  const hasActiveFilters = actionFilter !== "ALL" || entityFilter !== "ALL" || userFilter || startDate || endDate;
+  const hasActiveFilters = actionFilter !== "ALL" || entityFilter !== "ALL" || (userFilter && userFilter !== "ALL_USERS") || startDate || endDate;
 
   const getActionBadge = (action: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive"> = {
@@ -195,7 +195,7 @@ export default function AuditLogs() {
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos</SelectItem>
+                    <SelectItem value="ALL_USERS">Todos</SelectItem>
                     {uniqueUsers.map(u => (
                       <SelectItem key={u.id} value={u.id.toString()}>
                         {u.name}
