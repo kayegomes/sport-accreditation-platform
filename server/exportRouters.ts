@@ -9,6 +9,182 @@ import { storagePut } from "./storage";
  */
 export const exportRouter = router({
   /**
+   * Export custom report: Collaborators by Event
+   */
+  exportCollaboratorsByEvent: protectedProcedure
+    .input(z.object({
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const events = await db.getAllEvents();
+      const reportData = [];
+
+      for (const event of events) {
+        const accreditations = await db.getAccreditationsByEvent(event.id);
+        reportData.push({
+          eventName: event.name,
+          eventDate: event.eventDate,
+          location: event.location,
+          totalCollaborators: accreditations.length,
+          status: event.status,
+        });
+      }
+
+      const ExcelJS = (await import('exceljs')).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Colaboradores por Evento');
+
+      worksheet.columns = [
+        { header: 'Evento', key: 'eventName', width: 30 },
+        { header: 'Data', key: 'eventDate', width: 15 },
+        { header: 'Local', key: 'location', width: 25 },
+        { header: 'Total de Colaboradores', key: 'totalCollaborators', width: 20 },
+        { header: 'Status', key: 'status', width: 15 },
+      ];
+
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.addRows(reportData);
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const fileName = `relatorio-colaboradores-por-evento-${Date.now()}.xlsx`;
+      const fileKey = `exports/${ctx.user.id}/${fileName}`;
+      const { url } = await storagePut(fileKey, buffer as any, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+      await db.createExport({
+        exportType: 'report_collaborators_by_event',
+        fileName,
+        fileUrl: url,
+        fileKey,
+        filters: JSON.stringify(input),
+        exportedBy: ctx.user.id,
+      });
+
+      return { url, fileName };
+    }),
+
+  /**
+   * Export custom report: Accreditations by Status
+   */
+  exportAccreditationsByStatus: protectedProcedure
+    .input(z.object({
+      eventId: z.number().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const events = input.eventId ? [await db.getEventById(input.eventId)] : await db.getAllEvents();
+      const reportData: Array<{ eventName: string; status: string; count: number }> = [];
+
+      for (const event of events) {
+        if (!event) continue;
+        const accreditations = await db.getAccreditationsByEvent(event.id);
+        const statusCount: Record<string, number> = {};
+
+        accreditations.forEach((acc: any) => {
+          statusCount[acc.status] = (statusCount[acc.status] || 0) + 1;
+        });
+
+        Object.entries(statusCount).forEach(([status, count]) => {
+          reportData.push({
+            eventName: event.name,
+            status,
+            count,
+          });
+        });
+      }
+
+      const ExcelJS = (await import('exceljs')).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Credenciamentos por Status');
+
+      worksheet.columns = [
+        { header: 'Evento', key: 'eventName', width: 30 },
+        { header: 'Status', key: 'status', width: 20 },
+        { header: 'Quantidade', key: 'count', width: 15 },
+      ];
+
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.addRows(reportData);
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const fileName = `relatorio-credenciamentos-por-status-${Date.now()}.xlsx`;
+      const fileKey = `exports/${ctx.user.id}/${fileName}`;
+      const { url } = await storagePut(fileKey, buffer as any, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+      await db.createExport({
+        eventId: input.eventId,
+        exportType: 'report_accreditations_by_status',
+        fileName,
+        fileUrl: url,
+        fileKey,
+        filters: JSON.stringify(input),
+        exportedBy: ctx.user.id,
+      });
+
+      return { url, fileName };
+    }),
+
+  /**
+   * Export custom report: Events by Period
+   */
+  exportEventsByPeriod: protectedProcedure
+    .input(z.object({
+      startDate: z.string(),
+      endDate: z.string(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const events = await db.getAllEvents();
+      const filteredEvents = events.filter((event: any) => {
+        if (!event.eventDate) return false;
+        const eventDate = new Date(event.eventDate);
+        const start = new Date(input.startDate);
+        const end = new Date(input.endDate);
+        return eventDate >= start && eventDate <= end;
+      });
+
+      const reportData = filteredEvents.map((event: any) => ({
+        name: event.name,
+        wo: event.wo,
+        eventDate: event.eventDate,
+        location: event.location,
+        eventType: event.eventType,
+        status: event.status,
+        federation: event.federation,
+      }));
+
+      const ExcelJS = (await import('exceljs')).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Eventos por Período');
+
+      worksheet.columns = [
+        { header: 'Nome', key: 'name', width: 30 },
+        { header: 'WO', key: 'wo', width: 15 },
+        { header: 'Data', key: 'eventDate', width: 15 },
+        { header: 'Local', key: 'location', width: 25 },
+        { header: 'Tipo', key: 'eventType', width: 20 },
+        { header: 'Status', key: 'status', width: 15 },
+        { header: 'Federação', key: 'federation', width: 20 },
+      ];
+
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.addRows(reportData);
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const fileName = `relatorio-eventos-por-periodo-${Date.now()}.xlsx`;
+      const fileKey = `exports/${ctx.user.id}/${fileName}`;
+      const { url } = await storagePut(fileKey, buffer as any, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+      await db.createExport({
+        exportType: 'report_events_by_period',
+        fileName,
+        fileUrl: url,
+        fileKey,
+        filters: JSON.stringify(input),
+        exportedBy: ctx.user.id,
+      });
+
+      return { url, fileName };
+    }),
+  /**
    * Export collaborators to Excel
    */
   exportCollaborators: protectedProcedure

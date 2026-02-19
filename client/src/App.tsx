@@ -13,6 +13,7 @@ import Suppliers from "./pages/Suppliers";
 import JobFunctions from "./pages/JobFunctions";
 import AuditLogs from "./pages/AuditLogs";
 import PublicConsultation from "./pages/PublicConsultation";
+import Reports from "./pages/Reports";
 
 function Router() {
   return (
@@ -60,6 +61,12 @@ function Router() {
       <Route path="/logs">
         <DashboardLayout>
           <AuditLogs />
+        </DashboardLayout>
+      </Route>
+      
+      <Route path="/relatorios">
+        <DashboardLayout>
+          <Reports />
         </DashboardLayout>
       </Route>
       

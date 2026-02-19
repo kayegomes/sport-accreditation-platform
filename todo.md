@@ -117,3 +117,22 @@
 - [x] Adicionar procedure de delete para jobFunctions
 - [x] Criar testes para CRUD de fornecedores
 - [x] Criar testes para CRUD de funções
+
+
+## Completar Fase 4: Exportação e Importação
+
+### Exportação de Relatórios Personalizados
+- [x] Criar página de relatórios com seleção de tipo de relatório
+- [x] Implementar exportação de relatório de colaboradores por evento
+- [x] Implementar exportação de relatório de credenciamentos por status
+- [x] Implementar exportação de relatório de eventos por período
+- [x] Adicionar filtros personalizáveis (data, evento, fornecedor, função)
+- [x] Criar procedure para gerar relatórios agregados
+
+### Interface de Upload e Preview de Importação
+- [x] Criar modal de upload com drag-and-drop
+- [x] Implementar preview de dados antes da importação
+- [x] Adicionar validação visual de erros na tabela de preview
+- [x] Mostrar resumo de registros válidos/inválidos
+- [x] Permitir correção de erros antes de confirmar importação
+- [x] Adicionar botão de download do template de importação
