@@ -1,4 +1,4 @@
-# SporTV Accreditation Platform
+# Sport Accreditation Platform
 
 Plataforma completa para gestão de credenciamento de colaboradores em eventos esportivos.
 
