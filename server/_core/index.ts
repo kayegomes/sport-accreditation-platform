@@ -50,6 +50,11 @@ async function startServer() {
     serveStatic(app);
   }
 
+  // health check endpoint
+  app.get("/api/health", (_req: express.Request, res: express.Response) => {
+    res.status(200).send("OK");
+  });
+
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
 
@@ -57,8 +62,9 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  // Bind to 0.0.0.0 for external access (required by Render)
+  server.listen(port, "0.0.0.0", () => {
+    console.log(`Server running on http://0.0.0.0:${port}/`);
   });
 }
 
