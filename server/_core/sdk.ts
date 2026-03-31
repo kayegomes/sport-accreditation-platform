@@ -41,15 +41,18 @@ class OAuthService {
     code: string,
     state: string
   ): Promise<ExchangeTokenResponse> {
-    const payload = {
-      client_id: ENV.appId,
-      client_secret: ENV.oAuthClientSecret,
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: this.decodeState(state),
-    };
+    const params = new URLSearchParams();
+    params.append("client_id", ENV.appId);
+    params.append("client_secret", ENV.oAuthClientSecret);
+    params.append("grant_type", "authorization_code");
+    params.append("code", code);
+    params.append("redirect_uri", this.decodeState(state));
 
-    const { data } = await axios.post<any>(GOOGLE_TOKEN_URL, payload);
+    const { data } = await axios.post<any>(GOOGLE_TOKEN_URL, params.toString(), {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    });
 
     return {
       accessToken: data.access_token,

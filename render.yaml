@@ -3,8 +3,8 @@ services:
     name: sportv-credenciamento
     env: node
     plan: starter
-    buildCommand: pnpm install --frozen-lockfile && pnpm run build
-    startCommand: pnpm run start
+    buildCommand: pnpm install --frozen-lockfile && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+    startCommand: pnpm exec drizzle-kit push && pnpm run start
     envVars:
       - key: NODE_VERSION
         value: 20
