@@ -20,11 +20,12 @@ import { ENV } from './_core/env';
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db && ENV.databaseUrl) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      console.log("[Database] Connecting to:", ENV.databaseUrl.split('@')[1]); // Log host only for security
+      _db = drizzle(ENV.databaseUrl);
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      console.error("[Database] Failed to initialize Drizzle:", error);
       _db = null;
     }
   }
