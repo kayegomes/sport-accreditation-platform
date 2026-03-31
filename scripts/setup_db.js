@@ -42,12 +42,23 @@ async function setup() {
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB;
     `);
+
+    console.log("[Setup] Migrating events table...");
+    // Safely add columns that may have been added to schema after initial deploy
+    await connection.query(`
+      ALTER TABLE events
+        ADD COLUMN IF NOT EXISTS registrationDeadline DATE NOT NULL DEFAULT (CURDATE()),
+        ADD COLUMN IF NOT EXISTS credentialReleaseDate DATE NOT NULL DEFAULT (CURDATE());
+    `).catch(() => {
+      // Table may not exist yet on a brand new database - drizzle handles full creation
+      console.log("[Setup] events table not found yet, skipping migration");
+    });
     
     console.log("[Setup] Database initialization successful!");
     await connection.end();
   } catch (error) {
     console.error("[Setup] Failed to initialize database:", error);
-    process.exit(0); // Optional: stay alive to let server start
+    process.exit(0);
   }
 }
 
