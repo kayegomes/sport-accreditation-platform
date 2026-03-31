@@ -15,6 +15,8 @@ import AuditLogs from "./pages/AuditLogs";
 import PublicConsultation from "./pages/PublicConsultation";
 import Reports from "./pages/Reports";
 import EventAccess from "./pages/EventAccess";
+import Vehicles from "./pages/Vehicles";
+import UsersPage from "./pages/Users"; // Renamed to avoid name conflict with Users icon
 
 function Router() {
   return (
@@ -38,6 +40,12 @@ function Router() {
       <Route path="/colaboradores">
         <DashboardLayout>
           <Collaborators />
+        </DashboardLayout>
+      </Route>
+
+      <Route path="/veiculos">
+        <DashboardLayout>
+          <Vehicles />
         </DashboardLayout>
       </Route>
       
@@ -74,6 +82,12 @@ function Router() {
       <Route path="/acesso-eventos">
         <DashboardLayout>
           <EventAccess />
+        </DashboardLayout>
+      </Route>
+
+      <Route path="/usuarios">
+        <DashboardLayout>
+          <UsersPage />
         </DashboardLayout>
       </Route>
       

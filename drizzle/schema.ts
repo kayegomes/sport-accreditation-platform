@@ -322,3 +322,25 @@ export const eventSuppliers = mysqlTable("event_suppliers", {
 
 export type EventSupplier = typeof eventSuppliers.$inferSelect;
 export type InsertEventSupplier = typeof eventSuppliers.$inferInsert;
+
+// ============================================================================
+// VEÍCULOS
+// ============================================================================
+
+export const vehicles = mysqlTable("vehicles", {
+  id: int("id").autoincrement().primaryKey(),
+  supplierId: int("supplierId").notNull(),
+  model: varchar("model", { length: 255 }).notNull(),
+  plate: varchar("plate", { length: 20 }).notNull().unique(),
+  color: varchar("color", { length: 50 }),
+  type: varchar("type", { length: 100 }), // Ex: Carro, Van, Caminhão, Unidade Móvel
+  active: boolean("active").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  plateIdx: index("plate_idx").on(table.plate),
+  supplierIdx: index("supplier_idx").on(table.supplierId),
+}));
+
+export type Vehicle = typeof vehicles.$inferSelect;
+export type InsertVehicle = typeof vehicles.$inferInsert;

@@ -13,7 +13,8 @@ import {
   notifications, InsertNotification,
   batchImports, InsertBatchImport,
   exports as exportsTable, InsertExport,
-  eventSuppliers, InsertEventSupplier
+  eventSuppliers, InsertEventSupplier,
+  vehicles, InsertVehicle
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -127,6 +128,12 @@ export async function updateUserRole(userId: number, role: 'admin' | 'fornecedor
   const db = await getDb();
   if (!db) return;
   await db.update(users).set({ role }).where(eq(users.id, userId));
+}
+
+export async function updateUser(id: number, data: Partial<InsertUser>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set(data).where(eq(users.id, id));
 }
 
 // ============================================================================
@@ -381,6 +388,78 @@ export async function searchCollaborators(filters: {
   }
   
   return await db.select().from(collaborators).where(and(...conditions)).orderBy(collaborators.name);
+}
+
+// ============================================================================
+// VEHICLES
+// ============================================================================
+
+export async function createVehicle(vehicle: InsertVehicle) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(vehicles).values(vehicle);
+  return result;
+}
+
+export async function getVehicleById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(vehicles).where(eq(vehicles.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getVehiclesBySupplier(supplierId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(vehicles)
+    .where(and(
+      eq(vehicles.supplierId, supplierId),
+      eq(vehicles.active, true)
+    ))
+    .orderBy(desc(vehicles.createdAt));
+}
+
+export async function getAllVehicles() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(vehicles)
+    .where(eq(vehicles.active, true))
+    .orderBy(desc(vehicles.createdAt));
+}
+
+export async function updateVehicle(id: number, data: Partial<InsertVehicle>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(vehicles).set(data).where(eq(vehicles.id, id));
+}
+
+export async function deleteVehicle(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(vehicles).set({ active: false }).where(eq(vehicles.id, id));
+}
+
+export async function searchVehicles(filters: {
+  supplierId?: number;
+  plate?: string;
+  model?: string;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [eq(vehicles.active, true)];
+  
+  if (filters.supplierId) {
+    conditions.push(eq(vehicles.supplierId, filters.supplierId));
+  }
+  if (filters.plate) {
+    conditions.push(like(vehicles.plate, `%${filters.plate}%`));
+  }
+  if (filters.model) {
+    conditions.push(like(vehicles.model, `%${filters.model}%`));
+  }
+  
+  return await db.select().from(vehicles).where(and(...conditions)).orderBy(desc(vehicles.createdAt));
 }
 
 // ============================================================================

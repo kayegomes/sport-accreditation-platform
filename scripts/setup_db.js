@@ -28,6 +28,21 @@ async function setup() {
       ) ENGINE=InnoDB;
     `);
     
+    console.log("[Setup] Creating vehicles table...");
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS vehicles (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        supplierId INT NOT NULL,
+        model VARCHAR(255) NOT NULL,
+        plate VARCHAR(20) NOT NULL UNIQUE,
+        color VARCHAR(50),
+        type VARCHAR(100),
+        active BOOLEAN DEFAULT true NOT NULL,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB;
+    `);
+    
     console.log("[Setup] Database initialization successful!");
     await connection.end();
   } catch (error) {

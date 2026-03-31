@@ -647,6 +647,120 @@ export const appRouter = router({
   }),
 
   // ==========================================================================
+  // VEHICLES
+  // ==========================================================================
+  
+  vehicles: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role === 'admin' || ctx.user.role === 'consulta') {
+        return await db.getAllVehicles();
+      } else if (ctx.user.supplierId) {
+        return await db.getVehiclesBySupplier(ctx.user.supplierId);
+      }
+      return [];
+    }),
+    
+    getById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input, ctx }) => {
+        const vehicle = await db.getVehicleById(input.id);
+        if (ctx.user.role === 'fornecedor' && vehicle?.supplierId !== ctx.user.supplierId) {
+          throw new TRPCError({ code: 'FORBIDDEN' });
+        }
+        return vehicle;
+      }),
+    
+    create: fornecedorProcedure
+      .input(z.object({
+        supplierId: z.number().optional(),
+        model: z.string().min(1),
+        plate: z.string().min(1),
+        color: z.string().optional(),
+        type: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        let supplierId = input.supplierId;
+        if (ctx.user.role === 'fornecedor') {
+          supplierId = ctx.user.supplierId!;
+        }
+        
+        if (!supplierId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Fornecedor é obrigatório' });
+        }
+        
+        const result = await db.createVehicle({
+          ...input,
+          supplierId,
+          active: true,
+        });
+        
+        await logAction(ctx.user.id, ctx.user.name, 'CREATE', 'VEHICLE', undefined, input, ctx.req);
+        return { success: true, id: Number(result[0].insertId) };
+      }),
+    
+    update: fornecedorProcedure
+      .input(z.object({
+        id: z.number(),
+        model: z.string().min(1).optional(),
+        plate: z.string().min(1).optional(),
+        color: z.string().optional(),
+        type: z.string().optional(),
+        active: z.boolean().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { id, ...data } = input;
+        
+        if (ctx.user.role === 'fornecedor') {
+          const vehicle = await db.getVehicleById(id);
+          if (vehicle?.supplierId !== ctx.user.supplierId) {
+            throw new TRPCError({ code: 'FORBIDDEN' });
+          }
+        }
+        
+        await db.updateVehicle(id, data);
+        await logAction(ctx.user.id, ctx.user.name, 'UPDATE', 'VEHICLE', id, data, ctx.req);
+        return { success: true };
+      }),
+    
+    delete: fornecedorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role === 'fornecedor') {
+          const vehicle = await db.getVehicleById(input.id);
+          if (vehicle?.supplierId !== ctx.user.supplierId) {
+            throw new TRPCError({ code: 'FORBIDDEN' });
+          }
+        }
+        
+        await db.deleteVehicle(input.id);
+        await logAction(ctx.user.id, ctx.user.name, 'DELETE', 'VEHICLE', input.id, {}, ctx.req);
+        return { success: true };
+      }),
+  }),
+  // ==========================================================================
+  // USERS MANAGEMENT
+  // ==========================================================================
+  
+  users: router({
+    list: adminProcedure.query(async () => {
+      return await db.getAllUsers();
+    }),
+    
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        role: z.enum(['admin', 'fornecedor', 'consulta']).optional(),
+        supplierId: z.number().nullable().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { id, ...data } = input;
+        await db.updateUser(id, data);
+        await logAction(ctx.user.id, ctx.user.name, 'UPDATE', 'USER', id, data, ctx.req);
+        return { success: true };
+      }),
+  }),
+
+  // ==========================================================================
   // EXPORTS
   // ==========================================================================
   
