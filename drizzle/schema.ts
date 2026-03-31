@@ -15,8 +15,11 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["admin", "fornecedor", "consulta"]).default("fornecedor").notNull(),
-  supplierId: int("supplierId"), // Vínculo com fornecedor para usuários tipo "fornecedor"
+  role: mysqlEnum("role", ["admin", "gestor", "fornecedor", "consulta"]).default("fornecedor").notNull(),
+  supplierId: int("supplierId"), // Vínculo com fornecedor para usuários tipo "fornecedor" ou "gestor"
+  password: varchar("password", { length: 255 }), // Hash da senha para login direto
+  mustChangePassword: boolean("mustChangePassword").default(false).notNull(),
+  passwordResetToken: text("passwordResetToken"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

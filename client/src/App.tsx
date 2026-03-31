@@ -13,6 +13,7 @@ import Suppliers from "./pages/Suppliers";
 import JobFunctions from "./pages/JobFunctions";
 import AuditLogs from "./pages/AuditLogs";
 import PublicConsultation from "./pages/PublicConsultation";
+import Login from "./pages/Login";
 import Reports from "./pages/Reports";
 import EventAccess from "./pages/EventAccess";
 import Vehicles from "./pages/Vehicles";
@@ -22,6 +23,7 @@ function Router() {
   return (
     <Switch>
       {/* Public routes */}
+      <Route path="/login" component={Login} />
       <Route path="/consulta" component={PublicConsultation} />
       
       {/* Protected routes with dashboard layout */}

@@ -124,7 +124,7 @@ export async function getAllUsers() {
   return await db.select().from(users).orderBy(desc(users.createdAt));
 }
 
-export async function updateUserRole(userId: number, role: 'admin' | 'fornecedor' | 'consulta') {
+export async function updateUserRole(userId: number, role: 'admin' | 'gestor' | 'fornecedor' | 'consulta') {
   const db = await getDb();
   if (!db) return;
   await db.update(users).set({ role }).where(eq(users.id, userId));
@@ -134,6 +134,13 @@ export async function updateUser(id: number, data: Partial<InsertUser>) {
   const db = await getDb();
   if (!db) return;
   await db.update(users).set(data).where(eq(users.id, id));
+}
+
+export async function createUser(user: InsertUser) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(users).values(user);
+  return result;
 }
 
 // ============================================================================

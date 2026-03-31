@@ -7,6 +7,9 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 import { exportRouter, batchImportRouter } from "./exportRouters";
 import { eventSupplierRouter } from "./eventSupplierRouter";
+import { sdk } from "./_core/sdk";
+import crypto from "crypto";
+import { nanoid } from "nanoid";
 
 // ============================================================================
 // MIDDLEWARE: Role-based Access Control
@@ -19,9 +22,19 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next({ ctx });
 });
 
+/**
+ * managerProcedure: admin or gestor
+ */
+const managerProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== 'admin' && ctx.user.role !== 'gestor') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso restrito a administradores e gestores' });
+  }
+  return next({ ctx });
+});
+
 const fornecedorProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== 'fornecedor' && ctx.user.role !== 'admin') {
-    throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso restrito a fornecedores' });
+  if (ctx.user.role !== 'fornecedor' && ctx.user.role !== 'admin' && ctx.user.role !== 'gestor') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
   }
   return next({ ctx });
 });
@@ -61,6 +74,34 @@ export const appRouter = router({
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    login: publicProcedure
+      .input(z.object({
+        email: z.string().email(),
+        password: z.string().min(6),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const allUsers = await db.getAllUsers();
+        const user = allUsers.find(u => u.email === input.email);
+        
+        if (!user || !user.password) {
+          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'E-mail ou senha inválidos' });
+        }
+
+        // Verify password
+        const [salt, hash] = user.password.split(':');
+        const derivedHash = crypto.scryptSync(input.password, salt, 64).toString('hex');
+        
+        if (hash !== derivedHash) {
+          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'E-mail ou senha inválidos' });
+        }
+
+        // Create session
+        const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name || '' });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+
+        return { success: true, user };
+      }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -83,7 +124,7 @@ export const appRouter = router({
         return await db.getSupplierById(input.id);
       }),
     
-    create: adminProcedure
+    create: managerProcedure
       .input(z.object({
         name: z.string().min(1),
         cnpj: z.string().optional(),
@@ -102,7 +143,7 @@ export const appRouter = router({
         return { success: true, id: Number(result[0].insertId) };
       }),
     
-    update: adminProcedure
+    update: managerProcedure
       .input(z.object({
         id: z.number(),
         name: z.string().min(1).optional(),
@@ -121,7 +162,7 @@ export const appRouter = router({
         return { success: true };
       }),
     
-    delete: adminProcedure
+    delete: managerProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         await db.deleteSupplier(input.id);
@@ -141,7 +182,7 @@ export const appRouter = router({
       return await db.getAllJobFunctions();
     }),
     
-    create: adminProcedure
+    create: managerProcedure
       .input(z.object({
         name: z.string().min(1),
         description: z.string().optional(),
@@ -157,7 +198,7 @@ export const appRouter = router({
         return { success: true, id: Number(result[0].insertId) };
       }),
     
-    update: adminProcedure
+    update: managerProcedure
       .input(z.object({
         id: z.number(),
         name: z.string().min(1).optional(),
@@ -173,7 +214,7 @@ export const appRouter = router({
         return { success: true };
       }),
     
-    delete: adminProcedure
+    delete: managerProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         await db.deleteJobFunction(input.id);
@@ -183,6 +224,7 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
 
   // ==========================================================================
   // EVENTS
@@ -227,7 +269,7 @@ export const appRouter = router({
         return await db.searchEvents(input);
       }),
     
-    create: adminProcedure
+    create: managerProcedure
       .input(z.object({
         name: z.string().min(1),
         wo: z.string().optional(),
@@ -255,7 +297,7 @@ export const appRouter = router({
         return { success: true, id: Number(result[0].insertId) };
       }),
     
-    update: adminProcedure
+    update: managerProcedure
       .input(z.object({
         id: z.number(),
         name: z.string().min(1).optional().or(z.literal("")),
@@ -292,7 +334,7 @@ export const appRouter = router({
         return await db.getEventFunctionLimits(input.eventId);
       }),
     
-    setFunctionLimit: adminProcedure
+    setFunctionLimit: managerProcedure
       .input(z.object({
         eventId: z.number(),
         jobFunctionId: z.number(),
@@ -306,7 +348,7 @@ export const appRouter = router({
         return { success: true, id: Number(result[0].insertId) };
       }),
     
-    delete: adminProcedure
+    delete: managerProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         await db.deleteEvent(input.id);
@@ -680,7 +722,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         let supplierId = input.supplierId;
-        if (ctx.user.role === 'fornecedor') {
+        if (ctx.user.role === 'fornecedor' || (ctx.user.role === 'gestor' && ctx.user.supplierId)) {
           supplierId = ctx.user.supplierId!;
         }
         
@@ -710,7 +752,7 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const { id, ...data } = input;
         
-        if (ctx.user.role === 'fornecedor') {
+        if (ctx.user.role === 'fornecedor' || (ctx.user.role === 'gestor' && ctx.user.supplierId)) {
           const vehicle = await db.getVehicleById(id);
           if (vehicle?.supplierId !== ctx.user.supplierId) {
             throw new TRPCError({ code: 'FORBIDDEN' });
@@ -725,7 +767,7 @@ export const appRouter = router({
     delete: fornecedorProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
-        if (ctx.user.role === 'fornecedor') {
+        if (ctx.user.role === 'fornecedor' || (ctx.user.role === 'gestor' && ctx.user.supplierId)) {
           const vehicle = await db.getVehicleById(input.id);
           if (vehicle?.supplierId !== ctx.user.supplierId) {
             throw new TRPCError({ code: 'FORBIDDEN' });
@@ -742,14 +784,45 @@ export const appRouter = router({
   // ==========================================================================
   
   users: router({
-    list: adminProcedure.query(async () => {
+    list: managerProcedure.query(async () => {
       return await db.getAllUsers();
     }),
     
-    update: adminProcedure
+    create: managerProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        email: z.string().email(),
+        role: z.enum(['admin', 'gestor', 'fornecedor', 'consulta']),
+        supplierId: z.number().nullable().optional(),
+        password: z.string().min(6),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Hash password
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hash = crypto.scryptSync(input.password, salt, 64).toString('hex');
+        const passwordHash = `${salt}:${hash}`;
+
+        const openId = `local_${nanoid()}`;
+
+        const result = await db.createUser({
+          name: input.name,
+          email: input.email,
+          role: input.role,
+          supplierId: input.supplierId,
+          password: passwordHash,
+          openId,
+          loginMethod: 'password',
+        });
+
+        await logAction(ctx.user.id, ctx.user.name, 'CREATE', 'USER', undefined, { ...input, password: '[REDACTED]' }, ctx.req);
+        
+        return { success: true, id: Number(result[0].insertId) };
+      }),
+
+    update: managerProcedure
       .input(z.object({
         id: z.number(),
-        role: z.enum(['admin', 'fornecedor', 'consulta']).optional(),
+        role: z.enum(['admin', 'gestor', 'fornecedor', 'consulta']).optional(),
         supplierId: z.number().nullable().optional(),
       }))
       .mutation(async ({ input, ctx }) => {

@@ -23,13 +23,25 @@ async function setup() {
         name TEXT,
         email VARCHAR(320),
         loginMethod VARCHAR(64),
-        role ENUM('admin', 'fornecedor', 'consulta') NOT NULL DEFAULT 'fornecedor',
+        role ENUM('admin', 'gestor', 'fornecedor', 'consulta') NOT NULL DEFAULT 'fornecedor',
         supplierId INT,
+        password VARCHAR(255),
+        mustChangePassword BOOLEAN NOT NULL DEFAULT false,
+        passwordResetToken TEXT,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         lastSignedIn TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB;
     `);
+
+    // Migrate role enum if it exists
+    await connection.query(`
+      ALTER TABLE users 
+        MODIFY COLUMN role ENUM('admin', 'gestor', 'fornecedor', 'consulta') NOT NULL DEFAULT 'fornecedor',
+        ADD COLUMN IF NOT EXISTS password VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS mustChangePassword BOOLEAN NOT NULL DEFAULT false,
+        ADD COLUMN IF NOT EXISTS passwordResetToken TEXT;
+    `).catch(() => {});
 
     // =========================================================================
     // SUPPLIERS

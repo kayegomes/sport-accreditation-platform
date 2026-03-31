@@ -31,14 +31,14 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: Calendar, label: "Eventos", path: "/eventos" },
   { icon: Users, label: "Colaboradores", path: "/colaboradores" },
-  { icon: Car, label: "Veículos", path: "/veiculos" },
   { icon: UserCheck, label: "Credenciamentos", path: "/credenciamentos" },
-  { icon: Shield, label: "Acesso a Eventos", path: "/acesso-eventos", adminOnly: true },
-  { icon: Building2, label: "Fornecedores", path: "/fornecedores", adminOnly: true },
-  { icon: Briefcase, label: "Funções", path: "/funcoes", adminOnly: true },
-  { icon: FileText, label: "Logs de Auditoria", path: "/logs", adminOnly: true },
-  { icon: UserCog, label: "Gestão de Usuários", path: "/usuarios", adminOnly: true },
-  { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
+  { icon: Car, label: "Veículos", path: "/veiculos" },
+  { icon: UserCog, label: "Usuários", path: "/usuarios", roles: ["admin", "gestor"] },
+  { icon: Shield, label: "Acesso a Eventos", path: "/acesso-eventos", roles: ["admin", "gestor"] },
+  { icon: Building2, label: "Fornecedores", path: "/fornecedores", roles: ["admin", "gestor"] },
+  { icon: Briefcase, label: "Funções", path: "/funcoes", roles: ["admin", "gestor"] },
+  { icon: FileText, label: "Logs de Auditoria", path: "/auditoria", roles: ["admin"] },
+  { icon: BarChart3, label: "Relatórios", path: "/relatorios", roles: ["admin", "gestor"] },
   { icon: Search, label: "Consulta Pública", path: "/consulta", external: true },
 ];
 
@@ -190,7 +190,7 @@ function DashboardLayoutContent({
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
-              {menuItems.filter(item => !item.adminOnly || user?.role === 'admin').map(item => {
+              {menuItems.filter(item => !item.roles || item.roles.includes(user?.role || "consulta")).map(item => {
                 const isActive = location === item.path;
                 return (
                   <SidebarMenuItem key={item.path}>
