@@ -27,16 +27,16 @@ async function startServer() {
     })
   );
   
+  // health check endpoints (public for cron jobs and internal for Render)
+  app.get("/health", (_req, res) => res.status(200).send("OK"));
+  app.get("/api/health", (_req, res) => res.status(200).send("OK"));
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
-
-  // health check endpoints (public for cron jobs and internal for Render)
-  app.get("/health", (_req, res) => res.status(200).send("OK"));
-  app.get("/api/health", (_req, res) => res.status(200).send("OK"));
 
   const port = Number(process.env.PORT) || 3000;
 
