@@ -37,11 +37,24 @@ async function setup() {
     // Migrate role enum if it exists
     await connection.query(`
       ALTER TABLE users 
-        MODIFY COLUMN role ENUM('admin', 'gestor', 'fornecedor', 'consulta') NOT NULL DEFAULT 'fornecedor',
-        ADD COLUMN IF NOT EXISTS password VARCHAR(255),
-        ADD COLUMN IF NOT EXISTS mustChangePassword BOOLEAN NOT NULL DEFAULT false,
-        ADD COLUMN IF NOT EXISTS passwordResetToken TEXT;
-    `).catch(() => {});
+        MODIFY COLUMN role ENUM('admin', 'gestor', 'fornecedor', 'consulta') NOT NULL DEFAULT 'fornecedor'
+    `).catch(err => console.log("[Setup] Warning: Could not modify role column:", err.message));
+
+    const columnsToAdd = [
+      { name: 'password', type: 'VARCHAR(255)' },
+      { name: 'mustChangePassword', type: 'BOOLEAN NOT NULL DEFAULT false' },
+      { name: 'passwordResetToken', type: 'TEXT' },
+      { name: 'lastSignedIn', type: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP' }
+    ];
+
+    for (const col of columnsToAdd) {
+      await connection.query(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`)
+        .catch(err => {
+          if (!err.message.includes("Duplicate column name")) {
+            console.log(`[Setup] Warning: Could not add column ${col.name}:`, err.message);
+          }
+        });
+    }
 
     // =========================================================================
     // SUPPLIERS
