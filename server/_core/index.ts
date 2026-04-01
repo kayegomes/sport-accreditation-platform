@@ -34,10 +34,9 @@ async function startServer() {
     serveStatic(app);
   }
 
-  // health check endpoint
-  app.get("/api/health", (_req: express.Request, res: express.Response) => {
-    res.status(200).send("OK");
-  });
+  // health check endpoints (public for cron jobs and internal for Render)
+  app.get("/health", (_req, res) => res.status(200).send("OK"));
+  app.get("/api/health", (_req, res) => res.status(200).send("OK"));
 
   const port = Number(process.env.PORT) || 3000;
 
