@@ -53,7 +53,7 @@ interface CollaboratorFormProps {
 
 export function CollaboratorForm({ open, onOpenChange, collaborator }: CollaboratorFormProps) {
   const utils = trpc.useUtils();
-  const { data: user } = trpc.auth.getMe.useQuery();
+  const { data: user } = trpc.auth.me.useQuery();
   const { data: jobFunctions } = trpc.jobFunctions.list.useQuery();
   const { data: suppliers } = trpc.suppliers.list.useQuery(undefined, {
     enabled: user?.role === 'admin' || (user?.role === 'gestor' && !user.supplierId),
