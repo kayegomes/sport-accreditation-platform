@@ -32,10 +32,11 @@ import {
 import { toast } from "sonner";
 
 const collaboratorFormSchema = z.object({
-  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres").optional().or(z.literal("")),
-  cpf: z.string().regex(/^\d{11}$/, "CPF deve conter 11 dígitos").optional().or(z.literal("")),
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
-  phone: z.string().min(10, "Telefone inválido").optional().or(z.literal("")),
+  supplierId: z.number({ required_error: "Fornecedor é obrigatório" }),
+  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+  cpf: z.string().regex(/^\d{11}$/, "CPF deve conter 11 dígitos"),
+  email: z.string().email("Email inválido"),
+  phone: z.string().min(10, "Telefone inválido"),
   jobFunctionId: z.number().optional(),
   access: z.string().optional(),
   vehicleInfo: z.string().optional(),
@@ -52,11 +53,16 @@ interface CollaboratorFormProps {
 
 export function CollaboratorForm({ open, onOpenChange, collaborator }: CollaboratorFormProps) {
   const utils = trpc.useUtils();
+  const { data: user } = trpc.auth.getMe.useQuery();
   const { data: jobFunctions } = trpc.jobFunctions.list.useQuery();
+  const { data: suppliers } = trpc.suppliers.list.useQuery(undefined, {
+    enabled: user?.role === 'admin' || (user?.role === 'gestor' && !user.supplierId),
+  });
   
   const form = useForm<CollaboratorFormValues>({
     resolver: zodResolver(collaboratorFormSchema),
     defaultValues: collaborator ? {
+      supplierId: collaborator.supplierId,
       name: collaborator.name,
       cpf: collaborator.cpf,
       email: collaborator.email,
@@ -66,6 +72,7 @@ export function CollaboratorForm({ open, onOpenChange, collaborator }: Collabora
       vehicleInfo: collaborator.vehicleInfo || "",
       photoUrl: collaborator.photoUrl || "",
     } : {
+      supplierId: user?.supplierId || undefined,
       name: "",
       cpf: "",
       email: "",
@@ -75,6 +82,11 @@ export function CollaboratorForm({ open, onOpenChange, collaborator }: Collabora
       photoUrl: "",
     },
   });
+
+  // Update default provider when user data loads
+  if (!collaborator && !form.getValues("supplierId") && user?.supplierId) {
+    form.setValue("supplierId", user.supplierId);
+  }
 
   const createMutation = trpc.collaborators.create.useMutation({
     onSuccess: () => {
@@ -123,6 +135,36 @@ export function CollaboratorForm({ open, onOpenChange, collaborator }: Collabora
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {(user?.role === 'admin' || (user?.role === 'gestor' && !user.supplierId)) && (
+              <FormField
+                control={form.control}
+                name="supplierId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Empresa / Fornecedor *</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(Number(value))} 
+                      value={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o fornecedor" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {suppliers?.map((s) => (
+                          <SelectItem key={s.id} value={s.id.toString()}>
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="name"
@@ -190,47 +232,49 @@ export function CollaboratorForm({ open, onOpenChange, collaborator }: Collabora
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="jobFunctionId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Função</FormLabel>
-                  <Select 
-                    onValueChange={(value) => field.onChange(Number(value))} 
-                    value={field.value?.toString()}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma função" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {jobFunctions?.map((func) => (
-                        <SelectItem key={func.id} value={func.id.toString()}>
-                          {func.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="jobFunctionId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Função</FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(Number(value))} 
+                      value={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma função" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {jobFunctions?.map((func) => (
+                          <SelectItem key={func.id} value={func.id.toString()}>
+                            {func.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="access"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Acesso</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Área de Transmissão" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="access"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Acesso</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Área de Transmissão" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
