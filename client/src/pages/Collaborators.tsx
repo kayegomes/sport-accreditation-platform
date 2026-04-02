@@ -98,16 +98,20 @@ export default function Collaborators() {
                     <p className="text-muted-foreground">Telefone</p>
                     <p className="font-medium">{collaborator.phone}</p>
                   </div>
-                  {collaborator.defaultJobFunctionId && (
-                    <div>
-                      <p className="text-muted-foreground">Função ID</p>
-                      <Badge variant="outline">{collaborator.defaultJobFunctionId}</Badge>
-                    </div>
-                  )}
+                  <div>
+                    <p className="text-muted-foreground">Fornecedor</p>
+                    <p className="font-medium truncate">{collaborator.supplierName || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Função</p>
+                    <Badge variant="outline">{collaborator.jobFunctionName || "N/A"}</Badge>
+                  </div>
                   {collaborator.vehicleInfo && (
                     <div>
                       <p className="text-muted-foreground">Veículo</p>
-                      <p className="font-medium text-xs">{collaborator.vehicleInfo}</p>
+                      <p className="font-medium text-xs truncate" title={collaborator.vehicleInfo}>
+                        {collaborator.vehicleInfo}
+                      </p>
                     </div>
                   )}
                 </div>

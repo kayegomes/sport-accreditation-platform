@@ -341,20 +341,56 @@ export async function getCollaboratorByCPF(cpf: string) {
 export async function getCollaboratorsBySupplier(supplierId: number) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(collaborators)
-    .where(and(
-      eq(collaborators.supplierId, supplierId),
-      eq(collaborators.active, true)
-    ))
-    .orderBy(collaborators.name);
+  return await db.select({
+    id: collaborators.id,
+    supplierId: collaborators.supplierId,
+    name: collaborators.name,
+    cpf: collaborators.cpf,
+    email: collaborators.email,
+    phone: collaborators.phone,
+    photoUrl: collaborators.photoUrl,
+    jobFunctionId: collaborators.jobFunctionId,
+    access: collaborators.access,
+    vehicleInfo: collaborators.vehicleInfo,
+    active: collaborators.active,
+    createdAt: collaborators.createdAt,
+    supplierName: suppliers.name,
+    jobFunctionName: jobFunctions.name
+  })
+  .from(collaborators)
+  .leftJoin(suppliers, eq(collaborators.supplierId, suppliers.id))
+  .leftJoin(jobFunctions, eq(collaborators.jobFunctionId, jobFunctions.id))
+  .where(and(
+    eq(collaborators.supplierId, supplierId),
+    eq(collaborators.active, true)
+  ))
+  .orderBy(collaborators.name);
 }
 
 export async function getAllCollaborators() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(collaborators)
-    .where(eq(collaborators.active, true))
-    .orderBy(collaborators.name);
+  return await db.select({
+    id: collaborators.id,
+    supplierId: collaborators.supplierId,
+    name: collaborators.name,
+    cpf: collaborators.cpf,
+    email: collaborators.email,
+    phone: collaborators.phone,
+    photoUrl: collaborators.photoUrl,
+    jobFunctionId: collaborators.jobFunctionId,
+    access: collaborators.access,
+    vehicleInfo: collaborators.vehicleInfo,
+    active: collaborators.active,
+    createdAt: collaborators.createdAt,
+    supplierName: suppliers.name,
+    jobFunctionName: jobFunctions.name
+  })
+  .from(collaborators)
+  .leftJoin(suppliers, eq(collaborators.supplierId, suppliers.id))
+  .leftJoin(jobFunctions, eq(collaborators.jobFunctionId, jobFunctions.id))
+  .where(eq(collaborators.active, true))
+  .orderBy(collaborators.name);
 }
 
 export async function updateCollaborator(id: number, data: Partial<InsertCollaborator>) {
